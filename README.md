@@ -19,6 +19,6 @@ If you use this code for your publications, please cite it as:
 
 ## Problems or Questions
 
-If you have any problems or questions, please contact the author: Yujia Liu(lyjhuzai31**dot**at**163**dot**com).
+If you have any problems or questions, please contact the author: Yujia Liu(lyjhuzai31@163.com).
 
 
