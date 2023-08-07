@@ -1,0 +1,62 @@
+function [hatA, hatE, iter] = IR_ADMM(D, lambda)
+[m, n] = size(D);
+tol = 1e-7;
+maxIter = 1000;
+Y=0;
+mu = 1.25 / norm(D,2); 
+hatA = zeros( m, n);
+hatE = zeros( m, n);
+muBar = mu * 1e7;
+rho =1.5;          
+normD = norm(D, 'fro');
+iter = 0;
+converged = false;
+%% parameterization
+[U S V] = svd(D, 'econ');
+s = diag(S);
+rankD = sum(sum(s~=0));
+while ~converged
+    iter = iter + 1;
+    %% B
+    [U, S, V] = svd(D - hatE + (1 / mu) * Y, 'econ');
+    diagS = diag(S);
+     a = 1.3;%alpha
+     U_col=1./diagS.^(1-a);
+     S_0 = pos(diagS- 1 / mu*U_col);
+    if   m<n
+        hatA = (U * diag(S_0)) * V';
+    else
+        hatA = U * (diag(S_0) * V');
+    end
+ %%%%%%%%%%%%%%%%%%%%
+    %% T
+    tempT = D - hatA + (1 / mu) * Y;
+    C = 8; %C
+    beta = 2.5; %beta
+    hatE = pos(WL1(tempT,C,beta,lambda/mu));  
+%%
+    % Lagrange multiplier
+    Z = D - hatA - hatE;    
+    Y = Y + mu * Z;
+    mu = min(mu * rho, muBar);
+    
+    %% stop Criterion
+    stopC = norm(Z, 'fro') / normD;
+    if stopC < tol, converged = true; end
+    
+    if mod( iter, 10) == 0
+        disp(['#svd ' num2str(iter) ' r(A) ' num2str(rank(hatA))...
+            ' |E|_0 ' num2str(length(find(abs(hatE)>0)))...
+            ' stopC ' num2str(stopC)]);
+    end
+    
+    if ~converged && iter >= maxIter
+        disp('Maximum iterations reached') ;
+        converged = 1 ;
+    end
+    %% Partial Iteration(PI) conditions 
+    rankA = sum(S_0(:)>0);
+    if (rankA > 0.5 * rankD && iter >0)  
+        converged = 1 ;
+    end
+end
